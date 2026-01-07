@@ -8,6 +8,7 @@ This skill collection provides expertise in Domain-Driven Design (DDD) modeling 
 
 - macOS/Linux：
 	```bash
+	chmod +x scripts/install-skills.sh
 	./scripts/install-skills.sh
 	# 自定义目标目录
 	./scripts/install-skills.sh --target /path/to/skills
@@ -22,4 +23,4 @@ This skill collection provides expertise in Domain-Driven Design (DDD) modeling 
 	./scripts/install-skills.ps1
 	```
 
-脚本会将 `.claude/skills` 下的技能逐个同步到目标目录，如已有同名技能会先删除后再复制，确保版本一致。
+脚本会将仓库内 `skills/` 下的技能逐个同步到目标目录，如已有同名技能会先删除后再复制，确保版本一致。

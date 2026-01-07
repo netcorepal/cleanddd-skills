@@ -4,7 +4,7 @@ param(
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $RepoRoot = Split-Path -Parent $ScriptDir
-$SourceDir = Join-Path $RepoRoot ".claude/skills"
+$SourceDir = Join-Path $RepoRoot "skills"
 $TargetDir = if ([string]::IsNullOrWhiteSpace($Target)) {
     if ($env:SKILL_TARGET_DIR) { $env:SKILL_TARGET_DIR } else { Join-Path $HOME ".claude/skills" }
 } else {
