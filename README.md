@@ -1,6 +1,8 @@
 # CleanDDD Skill
 
-This skill collection provides expertise in Domain-Driven Design (DDD) modeling and CleanDDD-friendly .NET project scaffolding.
+English version: [README.en.md](README.en.md)
+
+本技能集提供领域驱动设计（DDD）建模与适配 CleanDDD 的 .NET 项目脚手架方面的专业知识。
 
 ## Skills
 
