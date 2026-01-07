@@ -34,4 +34,10 @@ This skill collection provides expertise in Domain-Driven Design (DDD) modeling 
 		 ./scripts/install-skills.sh
 		 ```
 
+3. 与 Agent 聊天，下面是可直接发送给 Agent 的示例提示词：
+
+	 - 创建一个 CleanDDD 项目
+	 - 基于 CleanDDD 建模一个“商城”模块
+	 - 基于上述模型实现代码骨架
+
 脚本会将仓库内 `skills/` 下的技能逐个同步到目标目录，如已有同名技能会先删除后再复制，确保版本一致。
