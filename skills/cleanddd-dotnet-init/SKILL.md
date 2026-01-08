@@ -13,6 +13,7 @@ description: Initialize CleanDDD dotnet projects using dotnet new (script option
 - `Database` (default `MySql`): 可选 `MySql` / `SqlServer` / `PostgreSQL` / `Sqlite` / `GaussDB` / `DMDB` / `MongoDB`
 - `MessageQueue` (default `RabbitMQ`): 可选 `RabbitMQ` / `Kafka` / `AzureServiceBus` / `AmazonSQS` / `NATS` / `RedisStreams` / `Pulsar`
 - `UseAspire` (default `true`): `true` / `false`
+- `IncludeCopilotInstructions` (default `false`): `true` / `false`
 - `ProjectName` (default 当前目录名，自动转 PascalCase，`-` 替换为 `.`)
 - `OutputDir` (default 当前目录路径)
 
@@ -33,6 +34,7 @@ dotnet new netcorepal-web \
   --MessageQueue RabbitMQ \
   --UseAspire true \
   --name My.Project \
+  --IncludeCopilotInstructions false \
   --output /path/to/target
 ```
 
@@ -48,4 +50,4 @@ python3 scripts/interactive_init.py [同上参数，可省略进入交互]
 
 - 省略参数时进入交互模式，运行前会显示命令预览。
 - 默认自动安装/更新 `NetCorePal.Template`，如已安装可加 `--skip-template-install`。
- - 无论脚本或 agent 调用，都应在执行前展示参数汇总并请用户确认。
+- 无论脚本或 agent 调用，都应在执行前展示参数汇总并请用户确认。

@@ -28,6 +28,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--Database", "-D", dest="database", help="Database provider")
     parser.add_argument("--MessageQueue", "-M", dest="message_queue", help="Message queue provider")
     parser.add_argument("--UseAspire", "-U", dest="use_aspire", type=parse_bool_arg, help="Enable Aspire dashboard")
+    parser.add_argument("--IncludeCopilotInstructions", dest="include_copilot_instructions", type=parse_bool_arg, help="Include Copilot instructions")
     parser.add_argument("--name", dest="project_name", help="Project name")
     parser.add_argument("--output", "-o", dest="output_dir", help="Output directory")
     parser.add_argument("--no-confirm", action="store_true", dest="no_confirm", help="Run without confirmation prompt")
@@ -106,6 +107,8 @@ def build_command(choices: dict) -> List[str]:
         choices["message_queue"],
         "--UseAspire",
         str(choices["use_aspire"]).lower(),
+        "--IncludeCopilotInstructions",
+        str(choices["include_copilot_instructions"]).lower(),
         "--name",
         choices["project_name"],
         "--output",
@@ -147,6 +150,11 @@ def main() -> int:
     message_queue = validate_choice(args.message_queue, MESSAGE_QUEUES, "MessageQueue", "RabbitMQ")
 
     use_aspire = args.use_aspire if args.use_aspire is not None else prompt_bool("Enable Aspire dashboard?", True)
+    include_copilot = (
+        args.include_copilot_instructions
+        if args.include_copilot_instructions is not None
+        else prompt_bool("Include Copilot instructions?", False)
+    )
 
     project_name_input = args.project_name if args.project_name else prompt_text("Project name", default_name)
     project_name = normalize_project_name(project_name_input)
@@ -158,6 +166,7 @@ def main() -> int:
         "database": database,
         "message_queue": message_queue,
         "use_aspire": use_aspire,
+        "include_copilot_instructions": include_copilot,
         "project_name": project_name,
         "output_dir": output_dir,
     }
