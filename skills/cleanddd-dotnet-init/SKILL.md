@@ -7,11 +7,11 @@ description: 初始化 CleanDDD dotnet 项目（netcorepal-web 模板）；在�
 
 使用 `dotnet new netcorepal-web` 快速创建 CleanDDD dotnet 项目。脚本仅作为可选包装，代理/非交互场景可直接调用 dotnet。
 
-## 何时使用
+## 使用时机
 - 从零新建 CleanDDD 解决方案，或需要在新目录快速生成可运行样板。
 - 已有旧模板需升级时，可在新目录重新生成后迁移代码。
 
-## Required inputs
+## 前置输入
 
 - `Framework` (default `net10.0`): 可选 `net8.0` / `net9.0` / `net10.0`
 - `Database` (default `MySql`): 可选 `MySql` / `SqlServer` / `PostgreSQL` / `Sqlite` / `GaussDB` / `DMDB` / `MongoDB`
@@ -23,7 +23,7 @@ description: 初始化 CleanDDD dotnet 项目（netcorepal-web 模板）；在�
 
 在执行命令前：展示参数汇总及可选项，获得用户确认后再继续。
 
-## How to run (dotnet)
+## 运行方式（dotnet）
 
 1) 安装模板（如未安装/需更新）
 
@@ -46,7 +46,7 @@ dotnet new netcorepal-web \
 
 在执行 `dotnet new` 前，请先向用户展示上述参数的汇总同时给出可选参数并获得明确确认，确认后再执行命令。
 
-## Optional helper script
+## 可选脚本（交互）
 
 如需参数校验/交互式收集，可用包装脚本：
 

@@ -12,7 +12,7 @@ description: 交互式 CleanDDD 教练技能，循序讲解并与用户互动练
 - 能识别常见反模式：跨聚合引用、共享实体、贫血模型、事务滥用等
 - 建立从“需求拆解 → 领域建模 → 项目初始化 → 代码实现”的串联能力
 
-## 使用前提
+## 前置输入
 - 有一个真实或练习的业务场景（可从对话输入，或使用 `cleanddd-requirements-analysis` 先产出结构化输入）
 - 能在终端运行 Python3（用于可选的交互脚本）
 
@@ -62,6 +62,10 @@ python3 skills/cleanddd-coach/scripts/interactive_coach.py
 
 ## 参数确认提示（示例）
 - “准备开始 CleanDDD 教练：模块=聚合与不变式、命令与查询、领域事件；输出笔记文件=./cleanddd-coach-notes.md。是否继续？”
+
+## 输出文件命名与放置约定
+- 笔记文件：默认输出 `cleanddd-coach-notes.md`；建议置于仓库根或指定 `docs/` 目录，便于团队共享与后续解析。
+- 术语统一：文档与对话中统一使用“聚合/领域事件/命令/查询/端点（Endpoints）”等术语，并与 `cleanddd-modeling`、`cleanddd-dotnet-coding` 保持一致。
 
 ## 核心原则与方法速览
 

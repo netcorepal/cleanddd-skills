@@ -7,10 +7,13 @@ description: 基于 cleanddd-requirements-analysis 结果，输出符合 CleanDD
 
 根据用户需求，设计符合 CleanDDD 原则的业务模型，包括聚合、命令、事件、查询等，确保模型的清晰性和可维护性。
 
-## 使用前提
+## 前置输入
 
 - 已有 `cleanddd-requirements-analysis` 的结构化结果（干系人表、需求条目表、业务实体视图、触发/后续动作表、业务规则与依赖、假设与待确认清单）；缺失时先运行需求分析技能并完成确认。
 - 需求条目/业务实体归类已与用户确认或标注了假设。
+
+## 使用时机
+- 当需要将结构化需求映射为 CleanDDD 的聚合/命令/查询/事件/Endpoint 与定时任务设计时。
 
 ## 输入映射关系
 
@@ -44,6 +47,12 @@ description: 基于 cleanddd-requirements-analysis 结果，输出符合 CleanDD
   - 路径/方法 | 命令/查询 | 认证/鉴权 | 幂等/一致性说明
 - 定时任务（如有）
   - 名称 | 频率 | 触发的命令/查询 | 幂等/补偿
+
+## 统一命名与放置约定
+- 命名风格：聚合/命令/事件/查询/端点使用 PascalCase；事件名称采用过去式。
+- 文档输出：采用上述“输出格式”章节的结构化 Markdown，以便后续自动代码生成与审阅。
+- 术语统一：统一使用“API 端点（Endpoints）”“领域事件（DomainEvent）”“领域事件处理器（DomainEventHandlers）”等术语。
+- 交付承接：本技能输出文件应作为 `cleanddd-dotnet-coding` 的输入依据；涉及文件命名与目录放置，参见该技能的“统一命名与放置约定”。
 
 ## 核心原则
 

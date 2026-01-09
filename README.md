@@ -12,7 +12,6 @@ English version: [README.en.md](README.en.md)
 | [cleanddd-dotnet-init](skills/cleanddd-dotnet-init/SKILL.md) | 使用 `dotnet new` 基于 `NetCorePal.Template` 模板快速初始化 CleanDDD 项目 |
 | [cleanddd-modeling](skills/cleanddd-modeling/SKILL.md) | 基于 CleanDDD 的软件系统分析建模技能 |
 | [cleanddd-dotnet-coding](skills/cleanddd-dotnet-coding/SKILL.md) | 基于 CleanDDD 建模结果，使用 NetCorePal 框架范式编写代码（.NET 平台 csharp 语言） |
-| [cleanddd-coach](skills/cleanddd-coach/SKILL.md) | 交互式 CleanDDD 教练：微课 + 测验 + 检查清单，帮助掌握核心原则并串联到需求分析/建模/编码 |
 
 ## 使用步骤
 
@@ -52,3 +51,8 @@ English version: [README.en.md](README.en.md)
 	 - “基于上述模型，实现代码骨架。”
 
 脚本会将仓库内 `skills/` 下的技能逐个同步到目标目录，如已有同名技能会先删除后再复制，确保版本一致。
+
+## 命名与文档规范
+- 章节统一：技能文档采用一致的章节结构，如“使用时机/前置输入/工作流/输出格式/参数确认提示/统一命名与放置约定”。
+- 命名风格：类型与术语统一使用 PascalCase；事件名称采用过去式；术语统一为“API 端点（Endpoints）/领域事件（DomainEvent）/命令（Commands）/查询（Queries）”。
+- 文件命名与放置：代码层面的文件命名与目录放置规则详见 [skills/cleanddd-dotnet-coding/SKILL.md](skills/cleanddd-dotnet-coding/SKILL.md) 的“统一命名与放置约定”。
