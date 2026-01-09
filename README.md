@@ -12,6 +12,7 @@ English version: [README.en.md](README.en.md)
 | [cleanddd-dotnet-init](skills/cleanddd-dotnet-init/SKILL.md) | 使用 `dotnet new` 基于 `NetCorePal.Template` 模板快速初始化 CleanDDD 项目 |
 | [cleanddd-modeling](skills/cleanddd-modeling/SKILL.md) | 基于 CleanDDD 的软件系统分析建模技能 |
 | [cleanddd-dotnet-coding](skills/cleanddd-dotnet-coding/SKILL.md) | 基于 CleanDDD 建模结果，使用 NetCorePal 框架范式编写代码（.NET 平台 csharp 语言） |
+| [cleanddd-coach](skills/cleanddd-coach/SKILL.md) | 交互式 CleanDDD 教练：微课 + 测验 + 检查清单，帮助掌握核心原则并串联到需求分析/建模/编码 |
 
 ## 使用步骤
 

@@ -11,6 +11,7 @@ This skill collection provides expertise in Domain-Driven Design (DDD) modeling 
 | [cleanddd-dotnet-init](skills/cleanddd-dotnet-init/SKILL.md) | Quickly initialize CleanDDD projects with `dotnet new` using the `NetCorePal.Template` template (optional helper script) |
 | [cleanddd-modeling](skills/cleanddd-modeling/SKILL.md) | CleanDDD-based software system analysis and domain modeling |
 | [cleanddd-dotnet-coding](skills/cleanddd-dotnet-coding/SKILL.md) | Implement code following CleanDDD models and NetCorePal patterns (.NET / C#) |
+| [cleanddd-coach](skills/cleanddd-coach/SKILL.md) | Interactive CleanDDD coaching: micro-lessons, quizzes, and checklists to master principles and connect to analysis/modeling/coding |
 
 ## How to Use
 

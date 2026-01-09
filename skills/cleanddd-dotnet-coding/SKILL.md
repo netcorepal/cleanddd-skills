@@ -1,6 +1,6 @@
 ---
 name: cleanddd-dotnet-coding
-description: 指导如何在 CleanDDD 项目中根据建模结果编写代码的技能
+description: 在 CleanDDD 项目中落地已建模的需求（聚合/命令/查询/API 端点（Endpoints）/事件/仓储/配置/测试）的编码指南；用于编写或修改业务功能、端点与数据访问时
 ---
 
 ## 使用时机
@@ -10,6 +10,11 @@ description: 指导如何在 CleanDDD 项目中根据建模结果编写代码的
 
 - 建模设计：已完成 CleanDDD 需求分析与建模，获得聚合、命令、查询、事件等设计文档。
 
+## 开始前快速检查
+- 是否已有 cleanddd-modeling 的聚合/命令/事件/API 端点（Endpoints）清单，缺失先补齐。
+- 确认聚合边界与不变式；命名统一 PascalCase，枚举固定拼写。
+- 约定：命令处理器不显式 SaveChanges；跨聚合交互用领域事件/集成事件，禁直接跨聚合更新。
+
 ## 通用原则
 - 优先用主构造函数，所有 IO/仓储/EF 调用使用 async/await 并传递 CancellationToken。
 - 严格分层：Web → Infrastructure → Domain；聚合与实体发布领域事件，命令处理器不显式 SaveChanges。
@@ -17,7 +22,7 @@ description: 指导如何在 CleanDDD 项目中根据建模结果编写代码的
 - 业务异常使用 KnownException；FastEndpoints 用特性配置，不使用 Configure()；IMediator 构造注入，使用 Send.OkAsync/CreatedAsync/NoContentAsync 与 .AsResponseData()。
 
 ## 推荐工作流
-1) 聚合与实体 → 2) 领域事件 → 3) 仓储与实体配置 → 4) 命令+验证器+处理器 → 5) 查询+验证器+处理器 → 6) Endpoints → 7) 领域事件处理器 → 8) 集成事件/转换器/处理器 → 9) 测试。
+1) 聚合与实体 → 2) 领域事件 → 3) 仓储与实体配置 → 4) 命令+验证器+处理器 → 5) 查询+验证器+处理器 → 6) API 端点（Endpoints） → 7) 领域事件处理器 → 8) 集成事件/转换器/处理器 → 9) 测试。
 
 ## 目录定位
 - Domain：src/ProjectName.Domain/（AggregatesModel/{Aggregate}Aggregate，DomainEvents）。
@@ -110,7 +115,8 @@ public class CreateUserCommandHandler(IUserRepository userRepository)
 
 ## 查询
 - record + IQuery<T>/IPagedQuery<T>；每个查询需 AbstractValidator<TQuery>。处理器实现 IQueryHandler，直接用 ApplicationDbContext 查询；异步 + CancellationToken；使用投影、WhereIf/OrderByIf/ToPagedDataAsync；分页用 PagedData<T>，提供默认排序。
-- 禁用仓储和跨聚合 Join；无副作用。放置 Web/Application/Queries/{Module}s/{Action}{Entity}Query.cs（含 DTO/验证器/处理器）。
+- 输入类型命名为 {Action}{Entity}Query；输出类型可以是 {Entity}Response 或 DTO（Data Transfer Object）。
+- 禁用仓储和跨聚合 Join；无副作用。放置 Web/Application/Queries/{Module}s/{Action}{Entity}Query.cs（含响应类型或 DTO、验证器、处理器）。
 
 示例：查询用户
 ```csharp
@@ -146,12 +152,12 @@ public class GetUserQueryHandler(ApplicationDbContext context)
 public record UserDto(UserId Id, string Name, string Email);
 ```
 
-## Endpoints
-- 每文件单 Endpoint，继承相应基类；请求/响应 DTO 同文件，使用 ResponseData<T> 包装。
+## API 端点（Endpoints）
+- 每文件单 API 端点（Endpoint），继承相应基类；请求/响应类型命名为 {Action}{Entity}Request/{Action}{Entity}Response（不使用 DTO）；使用 ResponseData<T> 包装。
 - 使用属性路由/权限（[HttpPost]/[AllowAnonymous]/[Tags]）；HandleAsync 内通过 mediator 发送命令/查询；Send.OkAsync/CreatedAsync/NoContentAsync + .AsResponseData()。
 - DTO 可直接用强类型 ID；避免 .Value；不使用 Configure()。位置：Web/Endpoints/{Module}/{Action}{Entity}Endpoint.cs。
 
-示例：创建用户 Endpoint
+示例：创建用户 API 端点（Endpoint）
 ```csharp
 using ProjectName.Domain.AggregatesModel.UserAggregate;
 using ProjectName.Web.Application.Commands.Users;
@@ -339,6 +345,12 @@ public class UserCreatedIntegrationEventHandlerForSendWelcomeEmail(
 - 使用 Theory/InlineData；强类型 ID 直接 new 比较；时间使用 >= 等相对比较。
 - 领域事件使用 GetDomainEvents() 校验类型/数量；可用工厂/Builder 生成测试数据。
 - 位置：test/ProjectName.Domain.Tests/{Entity}Tests.cs；Infrastructure/Web 类似；遵循强类型 ID、KnownException 检查。
+
+## 提交前自检
+- 命令/查询/处理器均为 async，传递 CancellationToken；未出现 SaveChanges/UpdateAsync 手动调用。
+- 领域事件发布完整，处理器不直接跨聚合改数据；集成事件无聚合引用，包含必要审计信息。
+- API 端点（Endpoints）仅调用 mediator；端点的 Request/Response 以及强类型 ID 不解包 .Value；路由/标签/鉴权正确。查询输出允许使用 Response 或 DTO。
+- EF 配置包含主键、长度、必填、注释；强类型 ID 使用标准值生成器。
 
 示例：聚合单测
 ```csharp
