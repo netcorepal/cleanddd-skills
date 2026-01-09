@@ -6,7 +6,7 @@ description: 在 CleanDDD 项目中落地已建模的需求（聚合/命令/查�
 ## 使用时机
 - 在本仓库编写/修改业务功能、命令、查询、端点、集成事件、仓储、实体配置或相关测试时加载。
 
-## Required inputs
+## 前置输入
 
 - 建模设计：已完成 CleanDDD 需求分析与建模，获得聚合、命令、查询、事件等设计文档。
 
@@ -24,17 +24,44 @@ description: 在 CleanDDD 项目中落地已建模的需求（聚合/命令/查�
 ## 推荐工作流
 1) 聚合与实体 → 2) 领域事件 → 3) 仓储与实体配置 → 4) 命令+验证器+处理器 → 5) 查询+验证器+处理器 → 6) API 端点（Endpoints） → 7) 领域事件处理器 → 8) 集成事件/转换器/处理器 → 9) 测试。
 
-## 目录定位
+## 目录结构
 - Domain：src/ProjectName.Domain/（AggregatesModel/{Aggregate}Aggregate，DomainEvents）。
 - Infrastructure：src/ProjectName.Infrastructure/（Repositories，EntityConfigurations，ApplicationDbContext）。
 - Web：src/ProjectName.Web/Application/（Commands，Queries，DomainEventHandlers，IntegrationEvents，IntegrationEventConverters，IntegrationEventHandlers）；Endpoints。
 - Tests：test/* 对应各层。
 
+## 统一命名与放置约定
+- 命名风格：全部使用 PascalCase；record/class/接口按 .NET 惯例；事件使用过去式。
+- 强类型 ID：命名为 {Entity}Id，定义为 `public partial record`，与实体/聚合同文件。
+- 文件命名：
+    - 命令：{Action}{Entity}Command.cs；同文件包含验证器与处理器。
+    - 查询：{Action}{Entity}Query.cs；同文件包含响应/DTO、验证器与处理器。
+    - 端点：{Action}{Entity}Endpoint.cs；每文件一个端点。
+    - 仓储：{Aggregate}Repository.cs；同文件放接口与实现。
+    - 实体配置：{Entity}EntityTypeConfiguration.cs。
+    - 领域事件：{Aggregate}DomainEvents.cs；可包含该聚合的多个事件。
+    - 集成事件：{Entity}{Action}IntegrationEvent.cs。
+    - 集成事件转换器：{Entity}{Action}IntegrationEventConverter.cs。
+    - 集成事件处理器：{IntegrationEvent}HandlerFor{Action}.cs。
+    - 领域事件处理器：{DomainEvent}DomainEventHandlerFor{Action}.cs。
+    - DbContext：ApplicationDbContext.cs。
+- 放置目录：
+    - 聚合/实体/领域事件：src/ProjectName.Domain/AggregatesModel/{Aggregate}Aggregate 与 src/ProjectName.Domain/DomainEvents。
+    - 仓储与配置：src/ProjectName.Infrastructure/Repositories 与 src/ProjectName.Infrastructure/EntityConfigurations。
+    - 应用层：src/ProjectName.Web/Application/{Commands|Queries|DomainEventHandlers|IntegrationEvents|IntegrationEventConverters|IntegrationEventHandlers}。
+    - 端点：src/ProjectName.Web/Endpoints/{Module}/。
+- 单文件合并约定：命令/查询将验证器、处理器与响应（如有）合并至同一文件；仓储接口与实现同文件；其余类型一类一文件。
+
 ## 聚合
-- 聚合根：继承 Entity<TId> + IAggregateRoot，protected 无参构造；属性 private set，默认值显式设置；状态变更时 this.AddDomainEvent()；包含 Deleted 与 RowVersion；每聚合仅一个根，命名无需 Aggregate 后缀。
-- 强类型 ID：public partial record，命名 {Entity}Id，与聚合同文件；实现 IGuidStronglyTypedId（优先）或 IInt64StronglyTypedId，依赖 EF 值生成，不手动赋值。
-- 子实体：public，强类型 ID，继承 Entity<TId> + IEntity，需无参构造。
-- 放置：src/ProjectName.Domain/AggregatesModel/{Aggregate}Aggregate/{Entity}.cs。
+- 命名规则：聚合根无需 “Aggregate” 后缀；子实体遵循实体命名。
+- 目录：src/ProjectName.Domain/AggregatesModel/{Aggregate}Aggregate。
+- 文件名：{Entity}.cs（与 `{Entity}Id` 同文件）。
+- 实现要点：
+    - 聚合根继承 Entity<TId> + IAggregateRoot，protected 无参构造。
+    - 属性 private set，默认值显式设置；包含 Deleted 与 RowVersion。
+    - 状态变更时使用 this.AddDomainEvent() 发布领域事件。
+    - 强类型 ID 实现 IGuidStronglyTypedId（优先）或 IInt64StronglyTypedId，由 EF 值生成器生成。
+    - 子实体继承 Entity<TId> + IEntity，并提供无参构造。
 
 示例：User 聚合根与强类型 ID
 ```csharp
@@ -67,7 +94,10 @@ public class User : Entity<UserId>, IAggregateRoot
 ```
 
 ## 领域事件
-- record + IDomainEvent；命名 {Entity}{Action}DomainEvent（过去式）；无逻辑，仅载体。文件位于 DomainEvents/{Aggregate}DomainEvents.cs，可含多个事件。
+- 命名规则：{Entity}{Action}DomainEvent（过去式），使用 record，类型实现 IDomainEvent。
+- 目录：src/ProjectName.Domain/DomainEvents。
+- 文件名：{Aggregate}DomainEvents.cs（同聚合的多个事件可合并）。
+- 实现要点：仅作为载体，不含业务逻辑。
 
 示例：User 领域事件
 ```csharp
@@ -78,8 +108,13 @@ public record UserEmailChangedDomainEvent(User User) : IDomainEvent;
 ```
 
 ## 命令
-- record 定义；无返回 ICommand，有返回 ICommand<TResponse>；每个命令需 AbstractValidator<TCommand>。处理器实现 ICommandHandler，仓储读取聚合；全异步，传递 CancellationToken；KnownException 表达业务异常；不手动 SaveChanges/UpdateAsync。
-- 文件：Web/Application/Commands/{Module}s/{Action}{Entity}Command.cs，命令+验证器+处理器同文件。
+- 命名规则：命令 record 为 {Action}{Entity}Command；返回类型使用 ICommand<TResponse>，无返回使用 ICommand。
+- 目录：src/ProjectName.Web/Application/Commands/{Module}s。
+- 文件名：{Action}{Entity}Command.cs（同文件包含验证器与处理器）。
+- 实现要点：
+    - 处理器实现 ICommandHandler（或泛型版本）。
+    - 使用仓储读取/持久化聚合；全异步并传递 CancellationToken。
+    - 使用 KnownException 表达业务异常；不手动调用 SaveChanges/UpdateAsync。
 
 示例：创建用户命令
 ```csharp
@@ -114,9 +149,15 @@ public class CreateUserCommandHandler(IUserRepository userRepository)
 ```
 
 ## 查询
-- record + IQuery<T>/IPagedQuery<T>；每个查询需 AbstractValidator<TQuery>。处理器实现 IQueryHandler，直接用 ApplicationDbContext 查询；异步 + CancellationToken；使用投影、WhereIf/OrderByIf/ToPagedDataAsync；分页用 PagedData<T>，提供默认排序。
-- 输入类型命名为 {Action}{Entity}Query；输出类型可以是 {Entity}Response 或 DTO（Data Transfer Object）。
-- 禁用仓储和跨聚合 Join；无副作用。放置 Web/Application/Queries/{Module}s/{Action}{Entity}Query.cs（含响应类型或 DTO、验证器、处理器）。
+- 命名规则：{Action}{Entity}Query；返回 IQuery<T> 或 IPagedQuery<T>。
+- 目录：src/ProjectName.Web/Application/Queries/{Module}s。
+- 文件名：{Action}{Entity}Query.cs（同文件包含响应/DTO、验证器与处理器）。
+- 实现要点：
+    - 处理器实现 IQueryHandler；直接使用 ApplicationDbContext 查询。
+    - 全异步并传递 CancellationToken；使用投影、WhereIf/OrderByIf/ToPagedDataAsync。
+    - 分页使用 PagedData<T>，提供默认排序。
+    - 禁用仓储与跨聚合 Join；无副作用。
+    - 输出类型可为 {Entity}Response 或 DTO。
 
 示例：查询用户
 ```csharp
@@ -153,9 +194,13 @@ public record UserDto(UserId Id, string Name, string Email);
 ```
 
 ## API 端点（Endpoints）
-- 每文件单 API 端点（Endpoint），继承相应基类；请求/响应类型命名为 {Action}{Entity}Request/{Action}{Entity}Response（不使用 DTO）；使用 ResponseData<T> 包装。
-- 使用属性路由/权限（[HttpPost]/[AllowAnonymous]/[Tags]）；HandleAsync 内通过 mediator 发送命令/查询；Send.OkAsync/CreatedAsync/NoContentAsync + .AsResponseData()。
-- DTO 可直接用强类型 ID；避免 .Value；不使用 Configure()。位置：Web/Endpoints/{Module}/{Action}{Entity}Endpoint.cs。
+- 命名规则：{Action}{Entity}Endpoint；请求/响应为 {Action}{Entity}Request/{Action}{Entity}Response（不使用 DTO）。
+- 目录：src/ProjectName.Web/Endpoints/{Module}。
+- 文件名：{Action}{Entity}Endpoint.cs（每文件一个端点）。
+- 实现要点：
+    - 使用属性路由/权限（[HttpPost]/[AllowAnonymous]/[Tags]）。
+    - HandleAsync 通过 mediator 发送命令/查询；Send.OkAsync/CreatedAsync/NoContentAsync + .AsResponseData()。
+    - 请求/响应可直接使用强类型 ID，避免解包 .Value；不使用 Configure()。
 
 示例：创建用户 API 端点（Endpoint）
 ```csharp
@@ -183,9 +228,13 @@ public class CreateUserEndpoint(IMediator mediator)
 ```
 
 ## 领域事件处理器
-- 实现 IDomainEventHandler<T>，方法签名 Handle(TEvent, CancellationToken)；主构造函数注入依赖；文件仅一个处理器。
-- 命名 {DomainEvent}DomainEventHandlerFor{Action}；通过 mediator 发送命令驱动聚合，不直接改 Db；遵守事务/取消。
-- 位置：Web/Application/DomainEventHandlers/{Name}.cs。
+- 命名规则：{DomainEvent}DomainEventHandlerFor{Action}。
+- 目录：src/ProjectName.Web/Application/DomainEventHandlers。
+- 文件名：{Name}.cs（每文件一个处理器）。
+- 实现要点：
+    - 实现 IDomainEventHandler<T>，方法签名 Handle(TEvent, CancellationToken)。
+    - 通过 mediator 发送命令驱动聚合，不直接改 Db；遵守事务/取消。
+    - 主构造函数注入依赖。
 
 示例：领域事件处理器触发命令
 ```csharp
@@ -206,8 +255,13 @@ public class UserCreatedDomainEventHandlerForSendWelcome(IMediator mediator)
 ```
 
 ## 仓储
-- 每聚合一个仓储：接口继承 IRepository<TEntity,TKey>，实现继承 RepositoryBase<TEntity,TKey,ApplicationDbContext>；接口与实现同文件，文件名 {Aggregate}Repository.cs。
-- DbContext 属性访问 DbSet；默认基类方法已提供，勿重复；自动注册依赖注入。
+- 命名规则：接口 I{Aggregate}Repository；实现 {Aggregate}Repository。
+- 目录：src/ProjectName.Infrastructure/Repositories。
+- 文件名：{Aggregate}Repository.cs（接口与实现同文件）。
+- 实现要点：
+    - 接口继承 IRepository<TEntity, TKey>；实现继承 RepositoryBase<TEntity, TKey, ApplicationDbContext>。
+    - DbContext 属性访问 DbSet；优先使用基类默认方法，避免重复实现。
+    - 由框架自动完成依赖注入注册。
 
 示例：用户仓储
 ```csharp
@@ -231,9 +285,13 @@ public class UserRepository(ApplicationDbContext context)
 ```
 
 ## 实体配置
-- 每实体一个配置，实现 IEntityTypeConfiguration<T>；文件 {Entity}EntityTypeConfiguration.cs，放 Infrastructure/EntityConfigurations。
-- 必须配置主键；字符串设 MaxLength；必填 IsRequired；所有字段给注释；按需要加索引。
-- 强类型 ID：IGuidStronglyTypedId → UseGuidVersion7ValueGenerator；IInt64StronglyTypedId → UseSnowFlakeValueGenerator；不要自定义转换器；RowVersion 无需配置。
+- 命名规则：{Entity}EntityTypeConfiguration。
+- 目录：src/ProjectName.Infrastructure/EntityConfigurations。
+- 文件名：{Entity}EntityTypeConfiguration.cs。
+- 实现要点：
+    - 实现 IEntityTypeConfiguration<T>。
+    - 必须配置主键；字符串列设置 MaxLength；必填列 IsRequired；字段添加 HasComment 注释；按需要添加索引。
+    - 强类型 ID：IGuidStronglyTypedId → UseGuidVersion7ValueGenerator；IInt64StronglyTypedId → UseSnowFlakeValueGenerator；RowVersion 无需配置；不要自定义转换器。
 
 示例：用户实体配置
 ```csharp
@@ -268,7 +326,12 @@ public class UserEntityTypeConfiguration : IEntityTypeConfiguration<User>
 ```
 
 ## DbContext
-- 在 ApplicationDbContext 添加聚合命名空间与 DbSet => Set<T>(); 默认 ApplyConfigurationsFromAssembly，无需手动注册。文件 Infrastructure/ApplicationDbContext.cs。
+- 命名规则：ApplicationDbContext。
+- 目录：src/ProjectName.Infrastructure。
+- 文件名：ApplicationDbContext.cs。
+- 实现要点：
+    - 添加聚合 DbSet 属性（`public DbSet<T> Name => Set<T>();`）。
+    - 通过 ApplyConfigurationsFromAssembly 自动应用实体配置。
 
 示例：DbSet 注册
 ```csharp
@@ -284,7 +347,10 @@ public partial class ApplicationDbContext(DbContextOptions<ApplicationDbContext>
 ```
 
 ## 集成事件
-- record，不可变，描述已发生事件；无聚合引用，避免敏感信息；文件 {Entity}{Action}IntegrationEvent.cs，目录 Web/Application/IntegrationEvents；复杂类型同文件也用 record。
+- 命名规则：{Entity}{Action}IntegrationEvent（record）。
+- 目录：src/ProjectName.Web/Application/IntegrationEvents。
+- 文件名：{Entity}{Action}IntegrationEvent.cs。
+- 实现要点：不可变；不直接引用聚合实例，避免敏感信息；复杂类型同文件使用 record。
 
 示例：用户创建集成事件
 ```csharp
@@ -296,7 +362,10 @@ public record UserCreatedIntegrationEvent(UserId UserId, string Name, string Ema
 ```
 
 ## 集成事件转换器
-- 实现 IIntegrationEventConverter<TDomainEvent,TIntegrationEvent>，将领域事件转为集成事件；record 事件。文件 {Entity}{Action}IntegrationEventConverter.cs，目录 Web/Application/IntegrationEventConverters；自动注册。
+- 命名规则：{Entity}{Action}IntegrationEventConverter。
+- 目录：src/ProjectName.Web/Application/IntegrationEventConverters。
+- 文件名：{Entity}{Action}IntegrationEventConverter.cs。
+- 实现要点：实现 IIntegrationEventConverter<TDomainEvent, TIntegrationEvent>，将领域事件映射为集成事件；使用 record。
 
 示例：领域事件到集成事件
 ```csharp
@@ -317,7 +386,10 @@ public class UserCreatedIntegrationEventConverter
 ```
 
 ## 集成事件处理器
-- 实现 IIntegrationEventHandler<T>，HandleAsync(T, CancellationToken)；主构造函数注入依赖；文件单一处理器，命名 {IntegrationEvent}HandlerFor{Action}，通过命令操作聚合，不直接改 Db。目录 Web/Application/IntegrationEventHandlers。
+- 命名规则：{IntegrationEvent}HandlerFor{Action}。
+- 目录：src/ProjectName.Web/Application/IntegrationEventHandlers。
+- 文件名：{Name}.cs（每文件一个处理器）。
+- 实现要点：实现 IIntegrationEventHandler<T>，在 HandleAsync 中通过命令驱动聚合，不直接修改 Db；主构造函数注入依赖。
 
 示例：处理集成事件
 ```csharp
@@ -341,15 +413,18 @@ public class UserCreatedIntegrationEventHandlerForSendWelcomeEmail(
 ```
 
 ## 单元测试
-- AAA 模式；单测单场景；覆盖正常+异常、领域事件、状态/不变量、边界；命名 {Method}_{Scenario}_{Expected}。
-- 使用 Theory/InlineData；强类型 ID 直接 new 比较；时间使用 >= 等相对比较。
-- 领域事件使用 GetDomainEvents() 校验类型/数量；可用工厂/Builder 生成测试数据。
-- 位置：test/ProjectName.Domain.Tests/{Entity}Tests.cs；Infrastructure/Web 类似；遵循强类型 ID、KnownException 检查。
+- 命名规则：{Method}_{Scenario}_{Expected}。
+- 目录：test/ProjectName.{Layer}.Tests/。
+- 文件名：{Entity}Tests.cs（或按模块拆分）。
+- 实现要点：
+    - 采用 AAA 模式；单测单场景；覆盖正常/异常、领域事件、状态/不变量、边界。
+    - 使用 Theory/InlineData；强类型 ID 直接 new 比较；时间采用相对比较（>= 等）。
+    - 使用 GetDomainEvents() 校验事件类型与数量；可用工厂/Builder 生成测试数据。
 
 ## 提交前自检
 - 命令/查询/处理器均为 async，传递 CancellationToken；未出现 SaveChanges/UpdateAsync 手动调用。
 - 领域事件发布完整，处理器不直接跨聚合改数据；集成事件无聚合引用，包含必要审计信息。
-- API 端点（Endpoints）仅调用 mediator；端点的 Request/Response 以及强类型 ID 不解包 .Value；路由/标签/鉴权正确。查询输出允许使用 Response 或 DTO。
+- API 端点仅调用 mediator；请求/响应与强类型 ID 不解包 .Value；路由/标签/鉴权正确。查询输出允许使用 Response 或 DTO。
 - EF 配置包含主键、长度、必填、注释；强类型 ID 使用标准值生成器。
 
 示例：聚合单测
