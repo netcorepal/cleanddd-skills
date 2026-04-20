@@ -138,23 +138,6 @@ public class UserRefreshToken : Entity<UserRefreshTokenId>
 }
 ```
 
-示例：子实体 EF 配置
-```csharp
-internal class UserRefreshTokenEntityTypeConfiguration : IEntityTypeConfiguration<UserRefreshToken>
-{
-    public void Configure(EntityTypeBuilder<UserRefreshToken> builder)
-    {
-        builder.ToTable("user_refresh_token");
-        builder.HasKey(x => x.Id);
-        builder.Property(x => x.Id).UseSnowFlakeValueGenerator().HasComment("刷新令牌标识");
-        builder.Property(x => x.Token).HasMaxLength(500).IsRequired().HasComment("令牌");
-        builder.Property(x => x.ExpiresTime).IsRequired().HasComment("过期时间");
-        // 外键关联聚合根，配置在聚合根的 UserEntityTypeConfiguration.Configure 方法中：
-        // builder.HasMany(u => u.RefreshTokens).WithOne().HasForeignKey("UserId").OnDelete(DeleteBehavior.Cascade);
-    }
-}
-```
-
 ## 领域事件
 - 命名规则：{Entity}{Action}DomainEvent（过去式），使用 record，类型实现 IDomainEvent。
 - 目录：src/ProjectName.Domain/DomainEvents。
@@ -383,6 +366,35 @@ public class UserEntityTypeConfiguration : IEntityTypeConfiguration<User>
             .HasComment("用户邮箱");
 
         builder.HasIndex(x => x.Email).IsUnique();
+    }
+}
+```
+
+示例：子实体 EF 配置（一对多）
+```csharp
+using ProjectName.Domain.AggregatesModel.UserAggregate;
+
+namespace ProjectName.Infrastructure.EntityConfigurations;
+
+internal class UserRefreshTokenEntityTypeConfiguration : IEntityTypeConfiguration<UserRefreshToken>
+{
+    public void Configure(EntityTypeBuilder<UserRefreshToken> builder)
+    {
+        builder.ToTable("user_refresh_token");
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.Id).UseSnowFlakeValueGenerator().HasComment("刷新令牌标识");
+        builder.Property(x => x.Token).HasMaxLength(500).IsRequired().HasComment("令牌");
+        builder.Property(x => x.ExpiresTime).IsRequired().HasComment("过期时间");
+    }
+}
+
+// 外键关系在聚合根配置中声明：
+public class UserEntityTypeConfiguration : IEntityTypeConfiguration<User>
+{
+    public void Configure(EntityTypeBuilder<User> builder)
+    {
+        // ...
+        builder.HasMany(u => u.RefreshTokens).WithOne().HasForeignKey("UserId").OnDelete(DeleteBehavior.Cascade);
     }
 }
 ```
