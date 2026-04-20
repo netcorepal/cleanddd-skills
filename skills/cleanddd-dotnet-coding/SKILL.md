@@ -338,44 +338,22 @@ public class UserRepository(ApplicationDbContext context)
     - 必须配置主键；字符串列设置 MaxLength；必填列 IsRequired；字段添加 HasComment 注释；按需要添加索引。
     - 强类型 ID：IGuidStronglyTypedId → UseGuidVersion7ValueGenerator；IInt64StronglyTypedId → UseSnowFlakeValueGenerator；RowVersion 无需配置；不要自定义转换器。
 
-示例：用户实体配置
+示例：实体配置（聚合根 + 子实体一对多）
 ```csharp
-using ProjectName.Domain.AggregatesModel.UserAggregate;
-
-namespace ProjectName.Infrastructure.EntityConfigurations;
-
+// 聚合根配置
 public class UserEntityTypeConfiguration : IEntityTypeConfiguration<User>
 {
     public void Configure(EntityTypeBuilder<User> builder)
     {
-        builder.ToTable("Users");
+        builder.ToTable("users");
         builder.HasKey(x => x.Id);
-
-        builder.Property(x => x.Id)
-            .UseGuidVersion7ValueGenerator()
-            .HasComment("用户标识");
-
-        builder.Property(x => x.Name)
-            .IsRequired()
-            .HasMaxLength(50)
-            .HasComment("用户姓名");
-
-        builder.Property(x => x.Email)
-            .IsRequired()
-            .HasMaxLength(100)
-            .HasComment("用户邮箱");
-
-        builder.HasIndex(x => x.Email).IsUnique();
+        builder.Property(x => x.Id).UseGuidVersion7ValueGenerator().HasComment("用户标识");
+        builder.Property(x => x.Name).IsRequired().HasMaxLength(50).HasComment("用户姓名");
+        builder.HasMany(u => u.RefreshTokens).WithOne().HasForeignKey("UserId").OnDelete(DeleteBehavior.Cascade);
     }
 }
-```
 
-示例：子实体 EF 配置（一对多）
-```csharp
-using ProjectName.Domain.AggregatesModel.UserAggregate;
-
-namespace ProjectName.Infrastructure.EntityConfigurations;
-
+// 子实体配置
 internal class UserRefreshTokenEntityTypeConfiguration : IEntityTypeConfiguration<UserRefreshToken>
 {
     public void Configure(EntityTypeBuilder<UserRefreshToken> builder)
@@ -384,17 +362,6 @@ internal class UserRefreshTokenEntityTypeConfiguration : IEntityTypeConfiguratio
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseSnowFlakeValueGenerator().HasComment("刷新令牌标识");
         builder.Property(x => x.Token).HasMaxLength(500).IsRequired().HasComment("令牌");
-        builder.Property(x => x.ExpiresTime).IsRequired().HasComment("过期时间");
-    }
-}
-
-// 外键关系在聚合根配置中声明：
-public class UserEntityTypeConfiguration : IEntityTypeConfiguration<User>
-{
-    public void Configure(EntityTypeBuilder<User> builder)
-    {
-        // ...
-        builder.HasMany(u => u.RefreshTokens).WithOne().HasForeignKey("UserId").OnDelete(DeleteBehavior.Cascade);
     }
 }
 ```
