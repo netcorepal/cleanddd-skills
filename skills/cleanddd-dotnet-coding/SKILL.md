@@ -90,8 +90,7 @@ public class User : Entity<UserId>, IAggregateRoot
     public RowVersion RowVersion { get; private set; } = new(0);
 
     // 一对多：User 拥有多个 RefreshToken（子实体有独立主键）
-    private readonly List<UserRefreshToken> _refreshTokens = [];
-    public IReadOnlyList<UserRefreshToken> RefreshTokens => _refreshTokens.AsReadOnly();
+    public ICollection<UserRefreshToken> RefreshTokens { get; private set; } = [];
 
     public void ChangeEmail(string email)
     {
@@ -102,7 +101,7 @@ public class User : Entity<UserId>, IAggregateRoot
     public UserRefreshToken AddRefreshToken(string token)
     {
         var refreshToken = new UserRefreshToken(token);
-        _refreshTokens.Add(refreshToken);
+        RefreshTokens.Add(refreshToken);
         return refreshToken;
     }
 }
